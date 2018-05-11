@@ -79,6 +79,17 @@ describe("Snake Model describes state and action for Snake Game", () => {
             expect(snakeModel.at(5, 3)).toEqual("snake");
             expect(snakeModel.at(6, 3)).toEqual("snake");
         });
+        it("makes snake longer if it eats food", () => {
+            snakeModel.initSnake(3, 3, 3);
+            snakeModel.set(6,3, "food");
+            snakeModel.setDirection("right");
+            snakeModel.move();
+            expect(snakeModel.at(3, 3)).toEqual("snake");
+            expect(snakeModel.at(4, 3)).toEqual("snake");
+            expect(snakeModel.at(5, 3)).toEqual("snake");
+            expect(snakeModel.at(6, 3)).toEqual("snake");
+            expect(snakeModel.finished).toEqual(false);
+        });
         it("finishes game if it runs into itself", () => {
             snakeModel.initSnake(3, 3, 3);
             snakeModel.setDirection("left");

@@ -11,7 +11,7 @@ const set = (self: typeof SnakeModel.Type, x: number, y: number, value: typeof F
     self.board[index] = value;
 };
 
-export const Field = types.enumeration("Field", ["empty", "border", "snake"]);
+export const Field = types.enumeration("Field", ["empty", "border", "poison", "snake", "food"]);
 export const Direction = types.enumeration("Direction", ["left", "right", "up", "down"]);
 
 export const SnakeModel = types.model({
@@ -32,11 +32,13 @@ export const SnakeModel = types.model({
         }
     };
 }).actions((self) => {
-    return {
+        return {
             init: (width: number, height: number): void => {
                 self.board.clear();
                 self.snake.clear();
                 self.direction = "right";
+                self.finished = false;
+                self.score = 0;
                 self.width = width;
                 self.height = height;
                 range(0, width * height - 1).forEach(idx => self.board[idx] = "empty");
@@ -50,6 +52,10 @@ export const SnakeModel = types.model({
                 });
             },
 
+            set: (x: number, y: number, value: typeof Field.Type) => {
+                const index = x + self.width * y;
+                self.board[index] = value;
+            },
             initSnake: (x: number, y: number, length: number) => {
                 self.snake.clear();
                 range(x, x + length - 1).forEach(idx => {
@@ -57,18 +63,28 @@ export const SnakeModel = types.model({
                     self.snake.push(index);
                     self.board[index] = "snake";
                 });
+                // make sure start direction is cleaned up to avoid crashing right into sth
+                range(x + length, x + length + 5).forEach(idx => {
+                    const index = idx + y * self.width;
+                    self.board[index] = "empty";
+                });
             },
             setDirection: (d: typeof Direction.Type) => {
                 self.direction = d;
             },
+            createRandom: (count: number, content: typeof Field.Type) => {
+                for (let i: number = 0; i < count; i++) {
+                    const randIndex = Math.floor(Math.random() * self.width * self.height);
+                    if (self.board[randIndex] === "empty"){
+                        self.board[randIndex] = content;
+                    }
+                }
+            },
             move: () => {
                 if (!self.finished && self.snake.length > 0) {
-                    // remove tail on board
-                    self.board[self.snake[0]] = "empty";
-                    self.snake.shift();
-                    const headIndex = self.snake[self.snake.length -1];
+                    const headIndex = self.snake[self.snake.length - 1];
                     let offset = 0;
-                    switch (self.direction){
+                    switch (self.direction) {
                         case "left":
                             offset = -1;
                             break;
@@ -83,10 +99,22 @@ export const SnakeModel = types.model({
                             break;
                     }
                     const newIndex = headIndex + offset;
-                    if (self.board[newIndex] !== "empty"){
-                        self.finished = true;
-                    } else {
-                        self.score = self.score +1;
+                    switch (self.board[newIndex]) {
+                        case "empty":
+                            // remove tail on board
+                            self.board[self.snake[0]] = "empty";
+                            self.snake.shift();
+                            self.score = self.score + 1;
+                            break;
+                        case "food":
+                            self.score = self.score + 10;
+                            break;
+                        default:
+                            // remove tail on board
+                            self.board[self.snake[0]] = "empty";
+                            self.snake.shift();
+                            self.finished = true;
+                            break;
                     }
                     self.snake.push(newIndex);
                     self.board[newIndex] = "snake";

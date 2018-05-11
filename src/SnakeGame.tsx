@@ -31,8 +31,12 @@ export class FieldComponent extends React.Component<IFieldProps> {
             case "snake":
                 result = <rect transform={transform} width={10} height={10} fill="purple"/>;
                 break;
+            case "food":
+                result = <ellipse transform={transform} cx={3} cy={5} rx={3} ry={5} fill="yellow"/>;
+                break;
+            case "poison":
             default:
-                result = <circle transform={transform} width={10} height={10} fill="red"/>;
+                result = <ellipse transform={transform} cx={5} cy={5} rx={5} ry={5} fill="red"/>;
                 break;
         }
         return result;
@@ -49,8 +53,10 @@ export class SnakeGame extends React.Component<ISnakeModelProps> {
         super(props);
     }
 
-    private newGame = ()=>{
+    private newGame = () => {
         this.props.model.init(60, 60);
+        this.props.model.createRandom(60, "food");
+        this.props.model.createRandom(60, "poison");
         this.props.model.initSnake(3, 3, 10);
         if (this.mainDiv !== null) {
             this.mainDiv.focus();
@@ -70,7 +76,7 @@ export class SnakeGame extends React.Component<ISnakeModelProps> {
             result.push(<FieldComponent fieldContent={f} x={idx % width} y={Math.floor(idx / width)}/>);
         });
 
-        return <div style={{margin:"10px"}}>
+        return <div style={{margin: "10px"}}>
             <div>
                 <button onClick={this.newGame} title="New Game">New Game</button>
                 <p>Score: {this.props.model.score}</p>
